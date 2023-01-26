@@ -13,25 +13,33 @@ function isHabitablePlanet(planet) {
   )
 }
 
-fs.createReadStream(path.join(__dirname, "..", "data", "kepler_data.csv"))
-  .pipe(
-    parse({
-      comment: "#",
-      columns: true,
-    })
-  )
-  .on("data", (data) => {
-    if (isHabitablePlanet(data)) {
-      habitalPlanets.push(data)
-    }
+function loadPlanetsData() {
+  return new Promise((resolve, reject) => {
+    fs.createReadStream(path.join(__dirname, "..", "data", "kepler_data.csv"))
+      .pipe(
+        parse({
+          comment: "#",
+          columns: true,
+        })
+      )
+      .on("data", (data) => {
+        if (isHabitablePlanet(data)) {
+          habitalPlanets.push(data)
+        }
+      })
+      .on("error", (err) => {
+        console.log(err)
+        reject(err)
+      })
+      .on("end", () => {
+        console.log(`Habitable Planets: ${habitalPlanets.length}`)
+        console.log("-----End of stream-----")
+        resolve()
+      })
   })
-  .on("error", (err) => {
-    console.log(err)
-  })
-  .on("end", () => {
-    console.log(`Habitable Planets: ${habitalPlanets.length}`)
-    console.log(habitalPlanets.map((planet) => planet["kepler_name"]))
-    console.log("-----End of stream-----")
-  })
+}
 
-module.exports = habitalPlanets
+module.exports = {
+  planets: habitalPlanets,
+  loadPlanetsData,
+}
